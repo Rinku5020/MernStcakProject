@@ -1,5 +1,5 @@
 const express = require("express");
-const {SingUp, Verification, SingIn, Logout, getUser, updateUser, getAllUsers} = require("../Controllers/User.Controller");
+const {SingUp, Verification, SingIn, Logout, getUser, updateUser, getAllUsers, DeleteUserByAdmin} = require("../Controllers/User.Controller");
 const isAuth = require("../Middlewares/isAuth");
 const upload = require("../Utils/multer");
 const roleValidator = require("../Middlewares/role");
@@ -16,6 +16,7 @@ UserRouter.patch("/updateUser/:userId",isAuth,upload.single("profilePic"),  upda
 
 // Admin Routes
 UserRouter.get("/getAllUser",isAuth,roleValidator,getAllUsers)
+UserRouter.delete("/deleteUser/:userId",isAuth,roleValidator,DeleteUserByAdmin)
 
 
 module.exports = UserRouter;

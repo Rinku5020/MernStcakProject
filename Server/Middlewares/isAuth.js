@@ -1,5 +1,7 @@
 
 const jwt = require("jsonwebtoken")
+const dotenv = require("dotenv")
+dotenv.config()
 const isAuth = (req, res, next) => {
     const { AccessToken } = req.cookies
     jwt.verify(AccessToken, process.env.privateKey_AccesToken, function (err, decoded) {
@@ -8,9 +10,10 @@ const isAuth = (req, res, next) => {
         }
         const user = decoded.userSingnInData
         req.user = user
+        next()
     });
 
-    next()
+  
 }
 
 module.exports = isAuth

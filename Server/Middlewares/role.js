@@ -1,4 +1,5 @@
 const roleValidator  =(req,res,next)=>{
+    console.log(req.user)
     const {role}=req.user
     if(role=="admin"){
         next()

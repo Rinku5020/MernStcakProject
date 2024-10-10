@@ -47,14 +47,14 @@ const Verification = (req, res) => {
         if (generateOTP !== otp) {
             return res.status(400).json({ message: "Invalid OTP" })
         }
-        bcrypt.hash(user.password, 5,async function(err, hash) {
-            if(err){
+        bcrypt.hash(user.password, 5, async function (err, hash) {
+            if (err) {
                 return res.status(500).json({ message: err.message })
             }
-            await UserModel.create({...user,password:hash})
-        res.status(200).json({ message: "user create Successfully" })
+            await UserModel.create({ ...user, password: hash })
+            res.status(200).json({ message: "user create Successfully" })
         });
-        
+
 
     });
 }
@@ -67,20 +67,20 @@ const SingIn = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: "user not found" })
         }
-        bcrypt.compare(password, user.password, function(err, result) {
-            if(err){
+        bcrypt.compare(password, user.password, function (err, result) {
+            if (err) {
                 return res.status(500).json({ message: err.message })
             }
-            if(!result){
+            if (!result) {
                 return res.status(400).json({ message: "Invalid password" })
             }
-            const {password,...rest} = user._doc
+            const { password, ...rest } = user._doc
             console.log(rest)
-          const token = jwt.sign({userSingnInData:rest},process.env.privateKey_AccesToken)
-          if(!token){
-              return res.status(400).json({ message: "Invalid password" })
-          }
-          res.cookie("AccessToken",token).status(200).json({message:"login successfully"})
+            const token = jwt.sign({ userSingnInData: rest }, process.env.privateKey_AccesToken)
+            if (!token) {
+                return res.status(400).json({ message: "Invalid password" })
+            }
+            res.cookie("AccessToken", token).status(200).json({ message: "login successfully" })
 
         });
     } catch (error) {
@@ -93,56 +93,85 @@ const Logout = (req, res) => {
     res.clearCookie("AccessToken").status(200).json({ message: "logout successfully" })
 }
 
-const getUser = async (req,res)=>{
-    const user=req.user
-    if(!user){
-        return res.status(400).json({message:"user not found"})
+const getUser = async (req, res) => {
+    const user = req.user
+    if (!user) {
+        return res.status(400).json({ message: "user not found" })
     }
-    if(user._id !== req.params.userId){
-        return res.status(400).json({message:"Invlid user"})
+    if (user._id !== req.params.userId) {
+        return res.status(400).json({ message: "Invlid user" })
     }
     try {
-        const userData = await UserModel.findOne({_id:req.params.userId})
-        const {password,...rest} = userData._doc
-        res.status(200).json({message:"user found Successfully",data:rest})
+        const userData = await UserModel.findOne({ _id: req.params.userId })
+        const { password, ...rest } = userData._doc
+        res.status(200).json({ message: "user found Successfully", data: rest })
     } catch (error) {
-        return res.status(500).json({message:error.message})
+        return res.status(500).json({ message: error.message })
     }
 }
 
 
-const updateUser = async(req,res)=>{
-    const {filename}=req.file
+const updateUser = async (req, res) => {
+    const { filename } = req.file
 
-if(req.body.email || req.body.password || req.body.role)
-{
-   return res.status(400).json({message:"update not allowed"})
-}
-try {
-    const updateUserData= await UserModel.findByIdAndUpdate(req.params.userId,
-        {$set:{...req.body,profileImage:filename}})
+    if (req.body.email || req.body.password || req.body.role) {
+        return res.status(400).json({ message: "update not allowed" })
+    }
+    try {
+        const updateUserData = await UserModel.findByIdAndUpdate(req.params.userId,
+            { $set: { ...req.body, profileImage: filename } })
 
-    const {password,...rest}=updateUserData._doc
-    return res.status(200).json({message:"Update Successfully",rest})
-} catch (error) {
-    return res.status(500).json({error:error.message})
-}
+        const { password, ...rest } = updateUserData._doc
+        return res.status(200).json({ message: "Update Successfully", rest })
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
 }
 
 // Admin Controlller
 
 const getAllUsers = async (req, res) => {
-try {
-    const allUserData=await UserModel.find()
-    if(!allUserData)
-    {
-        return res.status(400).json({message:"user not found"})
+
+    const limit = req.query.limit || 5
+    const skip = req.query.skip || 0
+    const sort = req.query.sort == "asc" ? 1 : -1
+    try {
+        const allUserData = await UserModel.find().limit(limit).skip(skip).sort({ createdAt: sort })
+        if (!allUserData) {
+            return res.status(400).json({ message: "user not found" })
+        }
+
+        res.status(200).json({ message: "All user get successfully", data: allUserData })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
     }
-    
-    res.status(200).json({message:"All user get successfully",data:allUserData})
-} catch (error) {
-    return res.status(500).json({message:error.message})
-}
 }
 
-module.exports = { SingUp, Verification, SingIn,Logout,getUser,updateUser,getAllUsers };
+const DeleteUserByAdmin = async (req, res) => {
+    try {
+        const user = await UserModel.findOne({_id:req.params.userId})
+        console.log(user)
+        if(!user)
+        {
+            return res.status(500).json({message:"User not Found "})
+        }
+        res.send("ok")
+
+        const DeleteUser = await UserModel.findByIdAndDelete(req.params.userId)
+        res.status(200).json({message:"User Deleted Successfully",data:DeleteUser})
+    } catch (error) {
+        return res.status(500).json({ message: error.message }) 
+    }
+}
+module.exports =
+{
+    SingUp,
+    Verification,
+    SingIn,
+    Logout,
+    getUser,
+    updateUser,
+    getAllUsers,
+    DeleteUserByAdmin
+
+};
