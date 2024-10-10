@@ -93,4 +93,56 @@ const Logout = (req, res) => {
     res.clearCookie("AccessToken").status(200).json({ message: "logout successfully" })
 }
 
-module.exports = { SingUp, Verification, SingIn,Logout };
+const getUser = async (req,res)=>{
+    const user=req.user
+    if(!user){
+        return res.status(400).json({message:"user not found"})
+    }
+    if(user._id !== req.params.userId){
+        return res.status(400).json({message:"Invlid user"})
+    }
+    try {
+        const userData = await UserModel.findOne({_id:req.params.userId})
+        const {password,...rest} = userData._doc
+        res.status(200).json({message:"user found Successfully",data:rest})
+    } catch (error) {
+        return res.status(500).json({message:error.message})
+    }
+}
+
+
+const updateUser = async(req,res)=>{
+    const {filename}=req.file
+
+if(req.body.email || req.body.password || req.body.role)
+{
+   return res.status(400).json({message:"update not allowed"})
+}
+try {
+    const updateUserData= await UserModel.findByIdAndUpdate(req.params.userId,
+        {$set:{...req.body,profileImage:filename}})
+
+    const {password,...rest}=updateUserData._doc
+    return res.status(200).json({message:"Update Successfully",rest})
+} catch (error) {
+    return res.status(500).json({error:error.message})
+}
+}
+
+// Admin Controlller
+
+const getAllUsers = async (req, res) => {
+try {
+    const allUserData=await UserModel.find()
+    if(!allUserData)
+    {
+        return res.status(400).json({message:"user not found"})
+    }
+    
+    res.status(200).json({message:"All user get successfully",data:allUserData})
+} catch (error) {
+    return res.status(500).json({message:error.message})
+}
+}
+
+module.exports = { SingUp, Verification, SingIn,Logout,getUser,updateUser,getAllUsers };
