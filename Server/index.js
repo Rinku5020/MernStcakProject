@@ -4,12 +4,14 @@ const  Connection = require("./db");
 const UserRouter=require("./Routes/UserRouter")
 const cookieParser = require('cookie-parser');
 const PostRouter = require("./Routes/PostRouter");
+const CommentRouter = require("./Routes/CommentRouter");
 dotenv.config()
 const app=express()
 app.use(cookieParser())
 app.use(express.json())
 app.use("/user",UserRouter)
 app.use("/post",PostRouter)
+app.use("/comment",CommentRouter)
 
 
 
